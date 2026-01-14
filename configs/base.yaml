@@ -1,0 +1,169 @@
+# MLOps Transformer Configuration
+# This is the single source of truth for all hyperparameters.
+
+project:
+  name: "Transformers for sensors"
+  description: "Transformer architecture"
+  author: "Ankit Karki"
+
+# Data Configuration
+data:
+  sequence_length: 100      
+  n_features: 4             
+  n_samples: 10000          
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  random_seed: 42
+  
+  sensors:
+    temperature:
+      normal_range: [20, 40]
+      failure_threshold: 80
+      unit: "celsius"
+    vibration:
+      normal_range: [0, 5]
+      failure_threshold: 15
+      unit: "g-force"
+    pressure:
+      normal_range: [90, 110]
+      failure_range: [60, 130]
+      unit: "PSI"
+    rpm:
+      normal_range: [1400, 1600]
+      failure_range: [1100, 1900]
+
+# Model Architecture
+model:
+  type: "transformer_encoder"
+  
+  transformer:
+    d_model: 128              # Embedding dimension (must be divisible by num_heads)
+    num_heads: 8              # Multi-head attention heads (128/8 = 16 per head)
+    num_layers: 4             # Stacked encoder blocks
+    d_ff: 512                 # Feed-forward hidden dimension (usually 4x d_model)
+    dropout: 0.1              # Dropout probability
+    activation: "gelu"        # GELU > ReLU for transformers
+    
+  # Task-specific head
+  classifier:
+    hidden_dims: [64, 32]     # MLP layers after transformer
+    output_dim: 2             # Binary classification (normal/failure)
+    dropout: 0.2
+
+# Training Configuration
+training:
+  batch_size: 32
+  epochs: 100
+  learning_rate: 0.0001       # Lower LR for transformers
+  weight_decay: 0.0001        # L2 regularization
+  grad_clip_norm: 1.0         # Gradient clipping
+  
+  # Learning rate schedule
+  lr_scheduler:
+    type: "cosine_annealing"
+    T_max: 100
+    eta_min: 0.00001
+    
+  # Warmup (critical for transformer training)
+  warmup:
+    enabled: true
+    steps: 1000               # Linear warmup for first 1k steps
+    
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 15
+    min_delta: 0.001
+    
+  # Checkpointing
+  checkpoint:
+    save_best_only: true
+    monitor: "val_f1"
+    mode: "max"
+    save_frequency: 5         # Save every N epochs
+
+# Optimizer Configuration
+optimizer:
+  type: "adamw"               # AdamW is standard for transformers
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+# Loss Function
+loss:
+  type: "focal_loss"          # Better for imbalanced data
+  alpha: 0.25                 # Weight for positive class
+  gamma: 2.0                  # Focusing parameter
+
+# AutoML Configuration (Optuna)
+automl:
+  enabled: true
+  n_trials: 50
+  direction: "maximize"
+  metric: "val_f1"
+  
+  # Search space
+  search_space:
+    d_model: [64, 128, 256]
+    num_heads: [4, 8, 16]
+    num_layers: [2, 4, 6]
+    learning_rate: [0.0001, 0.001]
+    batch_size: [16, 32, 64]
+    dropout: [0.1, 0.2, 0.3]
+
+# MLflow Configuration
+mlflow:
+  enabled: true
+  experiment_name: "transformer_predictive_maintenance"
+  tracking_uri: "mlruns"
+  artifact_location: "mlruns/artifacts"
+  
+  # What to log
+  log:
+    parameters: true
+    metrics: true
+    models: true
+    artifacts: true
+    system_metrics: true
+
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  log_interval: 10            # Log every N batches
+  
+  metrics:
+    - "loss"
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1"
+    - "auc_roc"
+    
+  # Data drift detection
+  drift_detection:
+    enabled: true
+    reference_window: 1000
+    detection_window: 100
+    threshold: 0.05
+
+# Deployment Configuration
+deployment:
+  model_name: "sensor_failure_model"
+  model_stage: "production"   # staging/production
+  
+  # Inference
+  inference:
+    batch_size: 1             # Real-time single prediction
+    max_latency_ms: 100       # SLA requirement
+    
+  # API
+  api:
+    host: "0.0.0.0"
+    port: 5000
+    workers: 4
+    
+  # Export formats
+  export:
+    onnx: true
+    torchscript: true
+    tflite: false             # For edge deployment 
