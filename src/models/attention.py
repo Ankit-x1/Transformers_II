@@ -97,39 +97,28 @@ class MultiHeadAttention(nn.Module):
         
         batch_size = query.size(0)
         
-        # Step 1: Linear projections
-        # [batch, seq_len, d_model] @ [d_model, d_model] → [batch, seq_len, d_model]
-        Q = self.W_q(query)  # [batch, seq_len_q, d_model]
-        K = self.W_k(key)    # [batch, seq_len_k, d_model]
-        V = self.W_v(value)  # [batch, seq_len_v, d_model]
+ 
+        Q = self.W_q(query) 
+        K = self.W_k(key)    
+        V = self.W_v(value)  
         
-        # Step 2: Split into multiple heads
-        # [batch, seq_len, d_model] → [batch, num_heads, seq_len, d_k]
-        Q = self.split_heads(Q)  # [batch, num_heads, seq_len_q, d_k]
-        K = self.split_heads(K)  # [batch, num_heads, seq_len_k, d_k]
-        V = self.split_heads(V)  # [batch, num_heads, seq_len_v, d_k]
+        Q = self.split_heads(Q)  
+        K = self.split_heads(K)  
+        V = self.split_heads(V)  
         
-        # Step 3: Adjust mask for multiple heads
         if mask is not None:
-            # Add head dimension: [batch, 1, seq_len_q, seq_len_k]
-            # This broadcasts across all heads
             if mask.dim() == 3:
                 mask = mask.unsqueeze(1)
         
-        # Step 4: Apply attention to each head in parallel
-        # All heads processed simultaneously via batched operations
-        # [batch, num_heads, seq_len_q, d_k]
+
         attention_output, attention_weights = self.attention(Q, K, V, mask)
         
-        # Step 5: Concatenate heads
-        # [batch, num_heads, seq_len_q, d_k] → [batch, seq_len_q, d_model]
+
         attention_output = self.combine_heads(attention_output)
         
-        # Step 6: Final linear projection
-        # [batch, seq_len_q, d_model] @ [d_model, d_model] → [batch, seq_len_q, d_model]
+
         output = self.W_o(attention_output)
-        
-        # Apply dropout to output
+
         output = self.dropout(output)
         
         return output, attention_weights
