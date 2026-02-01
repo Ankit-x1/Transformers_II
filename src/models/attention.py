@@ -6,32 +6,6 @@ from typing import Optional, Tuple
 class MultiHeadAttention(nn.Module):
     """
     Multi-Head Attention Mechanism
-    
-    Architecture:
-    ------------
-    Input: [batch, seq_len, d_model]
-    
-    1. Linear projections to Q, K, V:
-       Q = X @ W^Q  →  [batch, seq_len, d_model]
-       K = X @ W^K  →  [batch, seq_len, d_model]
-       V = X @ W^V  →  [batch, seq_len, d_model]
-    
-    2. Split into h heads:
-       Q → [batch, num_heads, seq_len, d_k]  where d_k = d_model / num_heads
-       K → [batch, num_heads, seq_len, d_k]
-       V → [batch, num_heads, seq_len, d_v]  where d_v = d_model / num_heads
-    
-    3. Parallel attention per head:
-       head_i = Attention(Q_i, K_i, V_i)  →  [batch, seq_len, d_v]
-    
-    4. Concatenate heads:
-       Concat(head_1, ..., head_h)  →  [batch, seq_len, d_model]
-    
-    5. Final linear projection:
-       Output = Concat @ W^O  →  [batch, seq_len, d_model]
-    
-    Implementation Details:
-    ----------------------
     - We reshape instead of actually splitting (more efficient)
     - Transpose for efficient batched matrix multiplication
     - Single output projection after concatenation
@@ -60,18 +34,14 @@ class MultiHeadAttention(nn.Module):
         
         self.d_model = d_model
         self.num_heads = num_heads
-        self.d_k = d_model // num_heads  # Dimension per head
-        
-        # Linear projections for Q, K, V
-        # Single projection then split is more efficient than separate projections per head
+        self.d_k = d_model // num_heads  
+
         self.W_q = nn.Linear(d_model, d_model)
         self.W_k = nn.Linear(d_model, d_model)
         self.W_v = nn.Linear(d_model, d_model)
         
-        # Output projection after concatenating heads
         self.W_o = nn.Linear(d_model, d_model)
         
-        # Attention mechanism (from Stage 1)
         from src.models.attention import ScaledDotProductAttention
         self.attention = ScaledDotProductAttention(dropout=dropout)
         
@@ -81,26 +51,11 @@ class MultiHeadAttention(nn.Module):
         """
         Split the last dimension into (num_heads, d_k).
         Reshape for parallel attention computation.
-        
-        Args:
-            x: [batch_size, seq_len, d_model]
-            
-        Returns:
-            [batch_size, num_heads, seq_len, d_k]
-            
-        Process:
-        -------
-        [batch, seq_len, d_model] 
-        → view [batch, seq_len, num_heads, d_k]
-        → transpose [batch, num_heads, seq_len, d_k]
         """
         batch_size, seq_len, d_model = x.size()
         
-        # Reshape: [batch, seq_len, d_model] → [batch, seq_len, num_heads, d_k]
         x = x.view(batch_size, seq_len, self.num_heads, self.d_k)
-        
-        # Transpose: [batch, seq_len, num_heads, d_k] → [batch, num_heads, seq_len, d_k]
-        # This groups all queries/keys/values for each head together
+
         return x.transpose(1, 2)
     
     def combine_heads(self, x: torch.Tensor) -> torch.Tensor:
@@ -115,10 +70,8 @@ class MultiHeadAttention(nn.Module):
         """
         batch_size, num_heads, seq_len, d_k = x.size()
         
-        # Transpose: [batch, num_heads, seq_len, d_k] → [batch, seq_len, num_heads, d_k]
         x = x.transpose(1, 2)
         
-        # Reshape: [batch, seq_len, num_heads, d_k] → [batch, seq_len, d_model]
         return x.contiguous().view(batch_size, seq_len, self.d_model)
     
     def forward(
