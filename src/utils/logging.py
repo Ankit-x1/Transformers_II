@@ -21,8 +21,8 @@ class MLOpsLogger:
             level: int = logging.INFO,
             log_to_file: bool = True):
         
-        self.logger = logging.get_logger(name)
-        self.logger.setlevel(level)
+        self.logger = logging.getLogger(name)
+        self.logger.setLevel(level)
         self.logger.handlers.clear()
 
         formatter = logging.Formatter(
