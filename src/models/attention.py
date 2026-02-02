@@ -1,6 +1,67 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import math
 from typing import Optional, Tuple
+
+
+class ScaledDotProductAttention(nn.Module):
+    """
+    Scaled Dot-Product Attention mechanism.
+    
+    Computes: softmax(QK^T / sqrt(d_k))V
+    
+    This is the core attention mechanism used in transformers.
+    """
+    
+    def __init__(self, dropout: float = 0.1):
+        """
+        Args:
+            dropout: Dropout probability for attention weights
+        """
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(
+        self,
+        query: torch.Tensor,
+        key: torch.Tensor,
+        value: torch.Tensor,
+        mask: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Args:
+            query: [batch_size, num_heads, seq_len_q, d_k]
+            key:   [batch_size, num_heads, seq_len_k, d_k]
+            value: [batch_size, num_heads, seq_len_v, d_v] (seq_len_k == seq_len_v)
+            mask:  [batch_size, 1, seq_len_q, seq_len_k] or None
+            
+        Returns:
+            output:            [batch_size, num_heads, seq_len_q, d_v]
+            attention_weights: [batch_size, num_heads, seq_len_q, seq_len_k]
+        """
+        d_k = query.size(-1)
+        
+        # Compute attention scores: QK^T
+        # [batch, heads, seq_q, d_k] @ [batch, heads, d_k, seq_k] → [batch, heads, seq_q, seq_k]
+        scores = torch.matmul(query, key.transpose(-2, -1))
+        
+        # Scale by sqrt(d_k) to prevent gradient explosion
+        scores = scores / math.sqrt(d_k)
+        
+        # Apply mask if provided
+        if mask is not None:
+            scores = scores.masked_fill(mask == 0, -1e9)
+        
+        # Apply softmax to get attention weights
+        attention_weights = F.softmax(scores, dim=-1)
+        attention_weights = self.dropout(attention_weights)
+        
+        # Apply attention weights to values
+        # [batch, heads, seq_q, seq_k] @ [batch, heads, seq_k, d_v] → [batch, heads, seq_q, d_v]
+        output = torch.matmul(attention_weights, value)
+        
+        return output, attention_weights
 
 
 class MultiHeadAttention(nn.Module):
@@ -42,7 +103,6 @@ class MultiHeadAttention(nn.Module):
         
         self.W_o = nn.Linear(d_model, d_model)
         
-        from src.models.attention import ScaledDotProductAttention
         self.attention = ScaledDotProductAttention(dropout=dropout)
         
         self.dropout = nn.Dropout(dropout)
