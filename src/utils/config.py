@@ -53,9 +53,8 @@ class Config:
                 return default
         return value 
     
-    def __get_item__(self, key):
+    def __getitem__(self, key):
         return self._config[key]
     
     def __repr__(self):
         return f"Config(hash={self.config_hash}, path={self.config_path})"
-    

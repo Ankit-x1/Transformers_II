@@ -1,0 +1,7 @@
+2026-02-02 02:48:03 | INFO     | main | ================================================================================
+2026-02-02 02:48:03 | INFO     | main | ================================================================================
+2026-02-02 02:48:03 | INFO     | main | Next steps:
+2026-02-02 02:48:03 | INFO     | main | 1. Review MLflow UI: mlflow ui --port 5001
+2026-02-02 02:48:03 | INFO     | main | 2. Deploy API: cd deploy/api && uvicorn app:app
+2026-02-02 02:48:03 | INFO     | main | 3. Monitor production: Use drift_detector on incoming data
+2026-02-02 02:48:03 | INFO     | main | 4. Retrain when drift detected or performance degrades

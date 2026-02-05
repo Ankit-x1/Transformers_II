@@ -1,0 +1,66 @@
+2026-02-02 10:05:25 | INFO     | main | ================================================================================
+2026-02-02 10:05:25 | INFO     | main | MLOPS TRANSFORMER PIPELINE - PRODUCTION EXECUTION
+2026-02-02 10:05:25 | INFO     | main | ================================================================================
+2026-02-02 10:05:25 | INFO     | main | ================================================================================
+2026-02-02 10:05:25 | INFO     | main | Experiment Configuration
+2026-02-02 10:05:25 | INFO     | main | ================================================================================
+2026-02-02 10:05:25 | INFO     | main | project:
+2026-02-02 10:05:25 | INFO     | main |  name: Transformers for sensors
+2026-02-02 10:05:25 | INFO     | main |  description: Transformer architecture
+2026-02-02 10:05:25 | INFO     | main |  author: Ankit Karki
+2026-02-02 10:05:25 | INFO     | main | data:
+2026-02-02 10:05:25 | INFO     | main |  sequence_length: 100
+2026-02-02 10:05:25 | INFO     | main |  n_features: 4
+2026-02-02 10:05:26 | INFO     | main |  n_samples: 10000
+2026-02-02 10:05:26 | INFO     | main |  train_split: 0.7
+2026-02-02 10:05:26 | INFO     | main |  val_split: 0.15
+2026-02-02 10:05:26 | INFO     | main |  test_split: 0.15
+2026-02-02 10:05:26 | INFO     | main |  random_seed: 42
+2026-02-02 10:05:26 | INFO     | main |  sensors: {'temperature': {'normal_range': [20, 40], 'failure_threshold': 80, 'unit': 'celsius'}, 'vibration': {'normal_range': [0, 5], 'failure_threshold': 15, 'unit': 'g-force'}, 'pressure': {'normal_range': [90, 110], 'failure_range': [60, 130], 'unit': 'PSI'}, 'rpm': {'normal_range': [1400, 1600], 'failure_range': [1100, 1900]}}
+2026-02-02 10:05:26 | INFO     | main | model:
+2026-02-02 10:05:26 | INFO     | main |  type: transformer_encoder
+2026-02-02 10:05:26 | INFO     | main |  transformer: {'d_model': 128, 'num_heads': 8, 'num_layers': 4, 'd_ff': 512, 'dropout': 0.1, 'activation': 'gelu'}
+2026-02-02 10:05:26 | INFO     | main |  classifier: {'hidden_dims': [64, 32], 'output_dim': 2, 'dropout': 0.2}
+2026-02-02 10:05:26 | INFO     | main | training:
+2026-02-02 10:05:26 | INFO     | main |  batch_size: 32
+2026-02-02 10:05:26 | INFO     | main |  epochs: 100
+2026-02-02 10:05:26 | INFO     | main |  learning_rate: 0.0001
+2026-02-02 10:05:26 | INFO     | main |  weight_decay: 0.0001
+2026-02-02 10:05:26 | INFO     | main |  grad_clip_norm: 1.0
+2026-02-02 10:05:26 | INFO     | main |  lr_scheduler: {'type': 'cosine_annealing', 'T_max': 100, 'eta_min': 1e-05}
+2026-02-02 10:05:26 | INFO     | main |  warmup: {'enabled': True, 'steps': 1000}
+2026-02-02 10:05:26 | INFO     | main |  early_stopping: {'enabled': True, 'patience': 15, 'min_delta': 0.001}
+2026-02-02 10:05:26 | INFO     | main |  checkpoint: {'save_best_only': True, 'monitor': 'val_f1', 'mode': 'max', 'save_frequency': 5}
+2026-02-02 10:05:26 | INFO     | main | optimizer:
+2026-02-02 10:05:26 | INFO     | main |  type: adamw
+2026-02-02 10:05:26 | INFO     | main |  betas: [0.9, 0.999]
+2026-02-02 10:05:26 | INFO     | main |  eps: 1e-08
+2026-02-02 10:05:26 | INFO     | main | loss:
+2026-02-02 10:05:26 | INFO     | main |  type: focal_loss
+2026-02-02 10:05:26 | INFO     | main |  alpha: 0.25
+2026-02-02 10:05:26 | INFO     | main |  gamma: 2.0
+2026-02-02 10:05:26 | INFO     | main | automl:
+2026-02-02 10:05:26 | INFO     | main |  enabled: True
+2026-02-02 10:05:26 | INFO     | main |  n_trials: 50
+2026-02-02 10:05:26 | INFO     | main |  direction: maximize
+2026-02-02 10:05:26 | INFO     | main |  metric: val_f1
+2026-02-02 10:05:26 | INFO     | main |  search_space: {'d_model': [64, 128, 256], 'num_heads': [4, 8, 16], 'num_layers': [2, 4, 6], 'learning_rate': [0.0001, 0.001], 'batch_size': [16, 32, 64], 'dropout': [0.1, 0.2, 0.3]}
+2026-02-02 10:05:26 | INFO     | main | mlflow:
+2026-02-02 10:05:26 | INFO     | main |  enabled: True
+2026-02-02 10:05:26 | INFO     | main |  experiment_name: transformer_predictive_maintenance
+2026-02-02 10:05:26 | INFO     | main |  tracking_uri: mlruns
+2026-02-02 10:05:26 | INFO     | main |  artifact_location: mlruns/artifacts
+2026-02-02 10:05:26 | INFO     | main |  log: {'parameters': True, 'metrics': True, 'models': True, 'artifacts': True, 'system_metrics': True}
+2026-02-02 10:05:26 | INFO     | main | monitoring:
+2026-02-02 10:05:26 | INFO     | main |  enabled: True
+2026-02-02 10:05:26 | INFO     | main |  log_interval: 10
+2026-02-02 10:05:26 | INFO     | main |  metrics: ['loss', 'accuracy', 'precision', 'recall', 'f1', 'auc_roc']
+2026-02-02 10:05:26 | INFO     | main |  drift_detection: {'enabled': True, 'reference_window': 1000, 'detection_window': 100, 'threshold': 0.05}
+2026-02-02 10:05:26 | INFO     | main | deployment:
+2026-02-02 10:05:26 | INFO     | main |  model_name: sensor_failure_model
+2026-02-02 10:05:26 | INFO     | main |  model_stage: production
+2026-02-02 10:05:26 | INFO     | main |  inference: {'batch_size': 1, 'max_latency_ms': 100}
+2026-02-02 10:05:26 | INFO     | main |  api: {'host': '0.0.0.0', 'port': 5000, 'workers': 4}
+2026-02-02 10:05:26 | INFO     | main |  export: {'onnx': True, 'torchscript': True, 'tflite': False}
+2026-02-02 10:05:26 | INFO     | main | Building Transformer model...
+2026-02-02 10:05:26 | INFO     | main | Model parameters: 826,882

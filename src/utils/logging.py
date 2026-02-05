@@ -44,7 +44,9 @@ class MLOpsLogger:
             self.logger.addHandler(file_handler)
     
     def info(self, msg:str):
-        self.logger.info(msg)
+        # Replace Unicode characters with ASCII for Windows compatibility
+        safe_msg = msg.replace('✓', '[OK]').replace('⚠️', '[WARNING]')
+        self.logger.info(safe_msg)
 
     def warning(self, msg:str):
         self.logger.warning(msg)

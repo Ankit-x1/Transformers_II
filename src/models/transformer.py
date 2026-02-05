@@ -173,8 +173,6 @@ class TransformerEncoderBlock(nn.Module):
         
         return x
 
-
-
 """
 Complete Transformer Encoder for Time-Series Classification
 
